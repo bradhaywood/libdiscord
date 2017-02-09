@@ -47,7 +47,11 @@ struct HTTPResponse http_get(struct Discord *discord) {
 	if(curl) {
 		char gateway_url[100];
 		strcpy(gateway_url, API_URL);
-		strcat(gateway_url, "/gateway/bot");
+        
+        if (discord->bot)
+            strcat(gateway_url, "/gateway/bot");
+        else
+            strcat(gateway_url, "/gateway");
 
 		struct curl_slist *chunk = NULL;
 		struct string s;

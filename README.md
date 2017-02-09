@@ -17,10 +17,11 @@
 int main() {
     struct Discord discord;
 
-    // initialise the discord structure with your token
+    // initialise the discord structure
     discord_init(
         &discord,
-        "Mjc1NzI2Mzg2OTYwNzkzNjAw.C32ypA.FbkHlm1Ika86Jyo8zD0YY1aZTNE"
+        "Your_lovely_token", // token
+        true // if this client will act as a bot
     );
 
     /* pass the discord struct to discord_connect

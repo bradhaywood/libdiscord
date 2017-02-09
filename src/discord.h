@@ -2,11 +2,13 @@
 #include <string.h>
 #include <stdlib.h>
 #include <jansson.h>
+#include <stdbool.h>
 #include "header.h"
 #include "http/http.h"
 
-void discord_init(struct Discord *discord, char* token) {
+void discord_init(struct Discord *discord, char* token, bool isbot) {
 	strcpy(discord->token, token);
+    discord->bot = isbot;
 }
 
 void discord_connect(struct Discord *discord) {
