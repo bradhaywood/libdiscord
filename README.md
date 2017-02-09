@@ -1,6 +1,15 @@
+# Installation
+
+```bash
+sh ./autogen.sh
+./configure --prefix=/usr/local
+make
+make install
+```
+
 # Building
 
-`cc -o bot bot.c -lcurl -ljansson`
+`cc -o bot bot.c -ldiscord -ljansson -lcurl`
 
 # Dependencies
 
@@ -12,7 +21,7 @@
 **Please note that this library is *FAR* from completed. I'll update usage as features are added**
 
 ```c
-#include "src/discord.h"
+#include <discord/discord.h>
 
 int main() {
     struct Discord discord;
