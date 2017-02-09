@@ -1,0 +1,10 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=${prefix}/include
+
+Name: Discord
+Description: Discord Library for C 
+Version: @VERSION@
+Libs: -L${libdir} -ldiscord
+Cflags: -I${includedir}

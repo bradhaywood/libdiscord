@@ -1,0 +1,3 @@
+EXPORTS
+    discord_init
+    discord_connect
