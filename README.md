@@ -21,7 +21,7 @@ int main() {
     discord_init(
         &discord,
         "Your_lovely_token", // token
-        true // if this client will act as a bot
+        1 // if this client will act as a bot
     );
 
     /* pass the discord struct to discord_connect
