@@ -5,7 +5,7 @@
 #include "header.h"
 #include "http/http.h"
 
-void discord_setToken(struct Discord *discord, char* token) {
+void discord_init(struct Discord *discord, char* token) {
 	strcpy(discord->token, token);
 }
 
