@@ -9,7 +9,7 @@
 
 # Usage
 
-**Please note that this library is *FAR* from completed. I'll update usage as features are added
+**Please note that this library is *FAR* from completed. I'll update usage as features are added**
 
 ```c
 #include "src/discord.h"
