@@ -36,3 +36,5 @@ m4/*.m4
 ltmain.sh
 libtool
 libdiscord.la
+config.guess
+config.sub
