@@ -34,7 +34,7 @@ size_t writefunc(void *ptr, size_t size, size_t nmemb, struct string *s) {
 	return size*nmemb;
 }
 
-struct HTTPResponse http_get(struct Discord *discord) {
+struct HTTPResponse http_get(Discord *discord) {
 	CURL *curl;
 	CURLcode res;
 	struct HTTPResponse r;

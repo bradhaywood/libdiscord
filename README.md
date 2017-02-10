@@ -24,7 +24,7 @@ make install
 #include <discord/discord.h>
 
 int main() {
-    struct Discord discord;
+    Discord discord;
 
     // initialise the discord structure
     discord_init(
