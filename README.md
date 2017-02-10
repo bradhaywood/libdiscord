@@ -2,14 +2,14 @@
 
 ```bash
 sh ./autogen.sh
-./configure --prefix=/usr/local
+./configure
 make
 make install
 ```
 
 # Building
 
-`cc -o bot bot.c -ldiscord -ljansson -lcurl`
+`cc -o bot bot.c -ldiscord -lcrypto -ljansson -lcurl 
 
 # Dependencies
 

@@ -29,6 +29,7 @@ void discord_connect(Discord *discord) {
         printf("Shards: \"%" JSON_INTEGER_FORMAT "\"\n", json_integer_value(shards));
         //strcpy(wsurl, json_string_value(wsurl));
         strcat((char*)wsurl, "?v=6&encoding=json");
-        printf("=> Initiating websocket connection to: %s\n", wsurl);
+
+        wsclient_new(discord, wsurl);
 	}
 }
