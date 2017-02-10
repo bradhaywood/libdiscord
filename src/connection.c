@@ -6,7 +6,7 @@ void discord_init(Discord *discord, char* token, _Bool isbot) {
 }
 
 void discord_connect(Discord *discord) {
-	struct HTTPResponse r;
+	HTTPResponse r;
     r = http_get(discord);
 	if (r.response_code != 0) {
 		printf("There was an error\n");
