@@ -1,106 +1,138 @@
 #include "discord.h"
-
-#include <unistd.h>
-#include <malloc.h>
 #include <sys/socket.h>
 #include <resolv.h>
 #include <netdb.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
+#include <openssl/bio.h>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
+#include <openssl/pem.h>
+#include <openssl/x509.h>
+#include <openssl/x509_vfy.h>
 
-#define FAIL    -1
-
-/*---------------------------------------------------------------------*/
-/*--- OpenConnection - create socket and connect to server.         ---*/
-/*---------------------------------------------------------------------*/
-int OpenConnection(const char *hostname, int port) {
-    int sd;
-    struct hostent *host;
-    struct sockaddr_in addr;
-
-    if ( (host = gethostbyname(hostname)) == NULL )
-    {
-        perror(hostname);
-        abort();
-    }
-    sd = socket(PF_INET, SOCK_STREAM, 0);
-    bzero(&addr, sizeof(addr));
-    addr.sin_family = AF_INET;
-    addr.sin_port = htons(port);
-    addr.sin_addr.s_addr = *(long*)(host->h_addr);
-    if ( connect(sd, &addr, sizeof(addr)) != 0 )
-    {
-        close(sd);
-        perror(hostname);
-        abort();
-    }
-    return sd;
-}
-
-/*---------------------------------------------------------------------*/
-/*--- InitCTX - initialize the SSL engine.                          ---*/
-/*---------------------------------------------------------------------*/
-SSL_CTX* InitCTX(void) {
-    SSL_METHOD *method;
-    SSL_CTX *ctx;
-
-    OpenSSL_add_all_algorithms();       /* Load cryptos, et.al. */
-    SSL_load_error_strings();           /* Bring in and register error messages */
-    method = SSLv23_client_method();     /* Create new client-method instance */
-    ctx = SSL_CTX_new(method);          /* Create new context */
-    if ( ctx == NULL )
-    {
-        ERR_print_errors_fp(stderr);
-        abort();
-    }
-    return ctx;
-}
-
-/*---------------------------------------------------------------------*/
-/*--- ShowCerts - print out the certificates.                       ---*/
-/*---------------------------------------------------------------------*/
-void ShowCerts(SSL* ssl) {
-    X509 *cert;
-    char *line;
-
-    cert = SSL_get_peer_certificate(ssl);   /* get the server's certificate */
-    if ( cert != NULL )
-    {
-        printf("Server certificates:\n");
-        line = X509_NAME_oneline(X509_get_subject_name(cert), 0, 0);
-        printf("Subject: %s\n", line);
-        free(line);                         /* free the malloc'ed string */
-        line = X509_NAME_oneline(X509_get_issuer_name(cert), 0, 0);
-        printf("Issuer: %s\n", line);
-        free(line);                         /* free the malloc'ed string */
-        X509_free(cert);                    /* free the malloc'ed certificate copy */
-    }
-    else
-        printf("No certificates.\n");
-}
+int create_socket(char[], BIO *);
 
 void wsclient_new(Discord *discord, const char *url) {
     printf("=> Connecting to WebSocket URL: %s\n", url);
 
 	HTTPResponse r;
+    char* base64EncodeOutput, *wskey = "Hello World", *seckey, *hostname;
+    char        dest_url[] = "https://gateway.discord.gg";
+    BIO         *certbio = NULL;
+    BIO         *outbio = NULL;
+    X509        *cert = NULL;
+    X509_NAME   *certname = NULL;
+    const SSL_METHOD *method;
     SSL_CTX *ctx;
     SSL *ssl;
-    int server, bytes;
-    char buf[1024];
-    char* base64EncodeOutput, *wskey = "Hello World", *seckey, *hostname;
+    int server = 0;
+    int ret, i;
+
     hostname = "gateway.discord.gg";
+    printf("=> Using hostname: %s\n", hostname);
     seckey = "Sec-WebSocket-Key: ";
     Base64Encode(wskey, strlen(wskey), &base64EncodeOutput);
-    strcat(seckey, base64EncodeOutput);
+    //strcat(seckey, base64EncodeOutput);
+    //printf("Sec-Key: %s\n", seckey);
 
-    ctx = InitCTX();
-    server = OpenConnection(hostname, 443);
-    ssl = SSL_new(ctx);                     /* create new SSL connection state */
-    SSL_set_fd(ssl, server);                /* attach the socket descriptor */
-    if ( SSL_connect(ssl) == FAIL )         /* perform the connection */
-        ERR_print_errors_fp(stderr);
-    else {
-        printf("Connected!\n");
-        //printf("Connected with %s encryption\n", SSL_get_cipher(ssl));
+    OpenSSL_add_all_algorithms();
+    ERR_load_BIO_strings();
+    ERR_load_crypto_strings();
+    SSL_load_error_strings();
+
+    certbio = BIO_new(BIO_s_file());
+    outbio  = BIO_new_fp(stdout, BIO_NOCLOSE);
+
+    if (SSL_library_init() < 0)
+        BIO_printf(outbio, "Failed to initialize the OpenSSL library\n");
+
+    method = SSLv23_client_method();
+
+  /* ---------------------------------------------------------- *
+   * Try to create a new SSL context                            *
+   * ---------------------------------------------------------- */
+    if ((ctx = SSL_CTX_new(method)) == NULL)
+        BIO_printf(outbio, "Unable to create a new SSL context structure.\n");
+
+    SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv2);
+    ssl = SSL_new(ctx);
+
+    server = create_socket(dest_url, outbio);
+    if (server != 0)
+        BIO_printf(outbio, "Successfully made the TCP connection to: %s.\n", dest_url);
+
+    SSL_set_fd(ssl, server);
+
+    if (SSL_connect(ssl) != 1 )
+        BIO_printf(outbio, "Error: Could not build a SSL session to: %s.\n", dest_url);
+    else
+        BIO_printf(outbio, "Successfully enabled SSL/TLS session to: %s.\n", dest_url);
+
+    cert = SSL_get_peer_certificate(ssl);
+    if (cert == NULL)
+        BIO_printf(outbio, "Error: Could not get a certificate from: %s.\n", dest_url);
+    else
+        BIO_printf(outbio, "Retrieved the server's certificate from: %s.\n", dest_url);
+
+    certname = X509_NAME_new();
+    certname = X509_get_subject_name(cert);
+
+    BIO_printf(outbio, "Displaying the certificate subject data:\n");
+    X509_NAME_print_ex(outbio, certname, 0, 0);
+    BIO_printf(outbio, "\n");
+
+    SSL_free(ssl);
+    close(server);
+    //FIXME: X509_free(cert);
+    SSL_CTX_free(ctx);
+    BIO_printf(outbio, "Finished SSL/TLS connection with server: %s.\n", dest_url);
+}
+
+int create_socket(char url_str[], BIO *out) {
+    int sockfd;
+    char hostname[256] = "";
+    char    portnum[6] = "443";
+    char      proto[6] = "";
+    char      *tmp_ptr = NULL;
+    int           port;
+    struct hostent *host;
+    struct sockaddr_in dest_addr;
+
+    if (url_str[strlen(url_str)] == '/')
+        url_str[strlen(url_str)] = '\0';
+
+    strncpy(proto, url_str, (strchr(url_str, ':')-url_str));
+    strncpy(hostname, strstr(url_str, "://")+3, sizeof(hostname));
+
+    if (strchr(hostname, ':')) {
+        tmp_ptr = strchr(hostname, ':');
+        /* the last : starts the port number, if avail, i.e. 8443 */
+        strncpy(portnum, tmp_ptr+1,  sizeof(portnum));
+        *tmp_ptr = '\0';
     }
+
+    port = atoi(portnum);
+
+    if ((host = gethostbyname(hostname)) == NULL ) {
+        BIO_printf(out, "Error: Cannot resolve hostname %s.\n",  hostname);
+        abort();
+    }
+
+    sockfd = socket(AF_INET, SOCK_STREAM, 0);
+
+    dest_addr.sin_family=AF_INET;
+    dest_addr.sin_port=htons(port);
+    dest_addr.sin_addr.s_addr = *(long*)(host->h_addr);
+
+    memset(&(dest_addr.sin_zero), '\0', 8);
+    tmp_ptr = inet_ntoa(dest_addr.sin_addr);
+
+    if (connect(sockfd, (struct sockaddr *) &dest_addr, sizeof(struct sockaddr)) == -1 ) {
+        BIO_printf(out, "Error: Cannot connect to host %s [%s] on port %d.\n",
+               hostname, tmp_ptr, port);
+    }
+
+    return sockfd;
 }

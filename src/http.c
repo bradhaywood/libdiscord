@@ -56,7 +56,7 @@ HTTPResponse http_get(Discord *discord) {
 
 		strcpy(r.content, s.ptr);
 		r.response_code = res;
-	    free(s.ptr);
+	    //FIXME: free(s.ptr);
 
 		/* always cleanup */
 		curl_slist_free_all(chunk);

@@ -9,7 +9,7 @@ make install
 
 # Building
 
-`cc -o bot bot.c -ldiscord -lcrypto -ljansson -lcurl 
+`cc -o bot bot.c -ldiscord -lssl -lcrypto -ljansson -lcurl 
 
 # Dependencies
 
