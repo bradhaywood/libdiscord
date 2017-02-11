@@ -15,11 +15,8 @@
 int create_socket(char[], BIO *);
 
 void wsclient_new(Discord *discord, const char *url) {
-    printf("=> Connecting to WebSocket URL: %s\n", url);
-
 	HTTPResponse r;
-    char* base64EncodeOutput, *wskey = "Hello World", *seckey, *hostname;
-    char        dest_url[] = "https://gateway.discord.gg";
+    char* base64EncodeOutput, *wskey = "Hello World", *seckey, *dest_url;
     BIO         *certbio = NULL;
     BIO         *outbio = NULL;
     X509        *cert = NULL;
@@ -29,9 +26,16 @@ void wsclient_new(Discord *discord, const char *url) {
     SSL *ssl;
     int server = 0;
     int ret, i;
+    
+    dest_url = str_replace((char*)url, "wss://", "https://");
+    if (dest_url == NULL) {
+        free(dest_url);
+        printf("Failed to generate URL\n");
+        exit(1);
+    }
 
-    hostname = "gateway.discord.gg";
-    printf("=> Using hostname: %s\n", hostname);
+    printf("=> Connecting to WebSocket URL: %s\n", dest_url);
+
     seckey = "Sec-WebSocket-Key: ";
     Base64Encode(wskey, strlen(wskey), &base64EncodeOutput);
     //strcat(seckey, base64EncodeOutput);

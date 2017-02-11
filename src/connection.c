@@ -27,8 +27,6 @@ void discord_connect(Discord *discord) {
         json_wsurl = json_object_get(root, "url");
         wsurl = json_string_value(json_wsurl);
         printf("Shards: \"%" JSON_INTEGER_FORMAT "\"\n", json_integer_value(shards));
-        //strcpy(wsurl, json_string_value(wsurl));
-        strcat((char*)wsurl, "?v=6&encoding=json");
 
         wsclient_new(discord, wsurl);
 	}
